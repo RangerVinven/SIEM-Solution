@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  account-db:
+    image: postgres:17
+    ports:
+      - "5000:5432"
+    volumes:
+      - account-db-data:/var/lib/postgresql/data
+    env_file:
+    - ./services/account-service/.env
+
+volumes:
+  account-db-data:
