@@ -1,3 +1,3 @@
 plugins {
-    id("dev.danielmcpherson.java-conventions")
+    id("siem.java-conventions")
 }
