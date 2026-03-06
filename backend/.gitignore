@@ -1,8 +1,20 @@
-# Ignore Gradle project-specific cache directory
+# Gradle
 .gradle
-
-# Ignore Gradle build output directory
 build
-
-# Ignore Kotlin plugin data
 .kotlin
+
+# IDE (Eclipse/IntelliJ/VS Code)
+.project
+.classpath
+.settings/
+bin/
+.idea/
+*.iml
+*.iws
+.vscode/
+.factorypath
+
+# Environment
+.env
+.env.*
+! .env.example
