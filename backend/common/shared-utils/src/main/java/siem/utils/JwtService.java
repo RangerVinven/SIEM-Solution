@@ -23,11 +23,13 @@ public class JwtService {
         this.KEY = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateToken(UUID userId) {
-        String id = userId.toString();
-        
+    public String generateToken(UUID userId, UUID organisationId, String role, String firstName, String lastName) {
         return Jwts.builder()
-            .subject(id)
+            .subject(userId.toString())
+            .claim("orgId", organisationId != null ? organisationId.toString() : null)
+            .claim("role", role)
+            .claim("firstName", firstName)
+            .claim("lastName", lastName)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + 86400000))
             .signWith(KEY)
@@ -35,12 +37,44 @@ public class JwtService {
     }
 
     public String extractUserId(String token) {
-        return Jwts.parser()
-            .verifyWith(KEY)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+        return extractClaim(token, "sub");
+    }
+
+    public String extractOrgId(String token) {
+        return extractClaim(token, "orgId");
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, "role");
+    }
+
+    public String extractFirstName(String token) {
+        return extractClaim(token, "firstName");
+    }
+
+    public String extractLastName(String token) {
+        return extractClaim(token, "lastName");
+    }
+
+    private String extractClaim(String token, String claimKey) {
+        try {
+            if ("sub".equals(claimKey)) {
+                return Jwts.parser()
+                    .verifyWith(KEY)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+            }
+            return Jwts.parser()
+                .verifyWith(KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get(claimKey, String.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
 
