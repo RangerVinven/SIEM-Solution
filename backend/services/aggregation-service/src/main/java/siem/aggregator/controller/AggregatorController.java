@@ -1,7 +1,7 @@
 package siem.aggregator.controller;
 
 import lombok.RequiredArgsConstructor;
-import siem.aggregator.dto.SiemEvent;
+import siem.models.SiemEvent;
 import siem.aggregator.service.EventPublisherService;
 
 import org.springframework.web.bind.annotation.PostMapping;

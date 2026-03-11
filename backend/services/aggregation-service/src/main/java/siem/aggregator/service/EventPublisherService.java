@@ -4,7 +4,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import siem.aggregator.dto.SiemEvent;
+import siem.models.SiemEvent;
 
 @Service
 @RequiredArgsConstructor
