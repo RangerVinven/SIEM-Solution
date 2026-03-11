@@ -4,11 +4,40 @@ services:
   account-db:
     image: postgres:17
     ports:
-      - "5000:5432"
+      - "5001:5432"
     volumes:
       - account-db-data:/var/lib/postgresql/data
     env_file:
     - ./services/account-service/.env
 
+  # Need this, otherwise when people run "docker compose up", they'll get a permisison error and kafka won't start
+  kafka-init:
+    image: alpine
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    command: chown -R 1000:1000 /var/lib/kafka/data
+
+  kafka:
+    image: apache/kafka-native
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    environment:
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
 volumes:
   account-db-data:
+  kafka-data:
