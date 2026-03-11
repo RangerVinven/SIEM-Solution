@@ -9,9 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import siem.models.UserPrincipal;
 import java.io.IOException;
-import java.util.Arrays;
 import siem.utils.JwtService;
+import java.util.Arrays;
+import java.util.Collections;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,12 +35,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 String userId = jwtService.extractUserId(token);
+                String orgId = jwtService.extractOrgId(token);
+                String role = jwtService.extractRole(token);
+                String firstName = jwtService.extractFirstName(token);
+                String lastName = jwtService.extractLastName(token);
                 
-                UsernamePasswordAuthenticationToken auth = 
-                    new UsernamePasswordAuthenticationToken(userId, null, java.util.Collections.emptyList());
-                
-                SecurityContextHolder.getContext().setAuthentication(auth);
-                
+                if (userId != null) {
+                    UserPrincipal principal = new UserPrincipal(userId, orgId, role, firstName, lastName);
+                    UsernamePasswordAuthenticationToken auth = 
+                        new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+                    
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();
             }
