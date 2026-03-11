@@ -11,6 +11,7 @@ dependencyManagement {
 
 dependencies {
     implementation(project(":common:shared-utils"))
+    implementation(project(":common:shared-models"))
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("jakarta.servlet:jakarta.servlet-api")
 
