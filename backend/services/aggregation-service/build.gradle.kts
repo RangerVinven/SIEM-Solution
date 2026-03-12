@@ -4,7 +4,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "siem.aggregator"
+group = "siem.aggregation"
 version = "0.0.1-SNAPSHOT"
 description = "The log aggregator"
 
