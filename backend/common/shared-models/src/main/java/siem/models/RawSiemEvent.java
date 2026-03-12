@@ -2,7 +2,7 @@ package siem.models;
 
 import java.time.Instant;
 
-public record SiemEvent(
+public record RawSiemEvent(
     String agentId,
     String osType,
     Instant timestamp,
