@@ -32,6 +32,7 @@ public class OrganisationService {
 
     public OrganisationResponse createOrganisation(CreateOrganisationRequest request) {
         Organisation newOrg = mapper.toEntity(request);
+        newOrg.setApiKey(UUID.randomUUID());
         return mapper.toResponse(repo.save(newOrg));
     }
 

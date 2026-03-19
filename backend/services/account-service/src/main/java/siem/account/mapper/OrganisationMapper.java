@@ -12,10 +12,12 @@ import siem.account.entity.Organisation;
 @Mapper(componentModel = "spring")
 public interface OrganisationMapper {
     @Mapping(target="id", ignore = true)
+    @Mapping(target="apiKey", ignore = true)
     Organisation toEntity(CreateOrganisationRequest request);
 
     OrganisationResponse toResponse(Organisation entity);
 
     @Mapping(target="id", ignore = true)
+    @Mapping(target="apiKey", ignore = true)
     void updateEntity(UpdateOrganisationRequest request, @MappingTarget Organisation entity);
 }

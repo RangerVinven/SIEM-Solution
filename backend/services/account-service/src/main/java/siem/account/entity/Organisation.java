@@ -24,4 +24,7 @@ public class Organisation {
 
     @Column(nullable = false)
     private String name;
+
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID apiKey;
 }
