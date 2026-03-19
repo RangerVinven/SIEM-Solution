@@ -7,6 +7,7 @@ import siem.aggregator.service.EventPublisherService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -14,8 +15,8 @@ public class AggregatorController {
 
     private final EventPublisherService service;
 
-    @PostMapping("/v1/aggregate")
-    public void aggregate(@RequestBody RawSiemEvent eventPayload) {
-        service.publishEvent(eventPayload);
+    @PostMapping("/aggregate")
+    public void aggregate(@RequestBody List<RawSiemEvent> eventPayloadList) {
+        service.publishEvent(eventPayloadList);
     }
 }
