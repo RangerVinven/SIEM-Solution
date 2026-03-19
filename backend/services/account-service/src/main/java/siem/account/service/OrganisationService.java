@@ -113,4 +113,10 @@ public class OrganisationService {
         User savedUser = userRepo.save(newUser);
         return userMapper.toResponse(savedUser);
     }
+
+    public void validateAPIKey(String apiKey) {
+        if (!repo.existsByApiKey(apiKey)) {
+            throw new AccessDeniedException("Invalid API key");
+        }
+    }
 }

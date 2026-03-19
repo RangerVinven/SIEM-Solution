@@ -1,0 +1,1 @@
+ALTER TABLE organisations ADD COLUMN api_key VARCHAR(255) NOT NULL;

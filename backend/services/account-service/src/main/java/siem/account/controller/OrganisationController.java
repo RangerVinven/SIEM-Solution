@@ -50,4 +50,9 @@ public class OrganisationController {
     public UserResponse addEmployee(@PathVariable String id, @RequestBody AddEmployeeRequest request) {
         return service.addEmployee(id, request);
     }
+
+    @GetMapping("/organisations/api-keys/{id}")
+    public void getApiKey(@PathVariable String id) {
+        service.validateAPIKey(id);
+    }
 }
