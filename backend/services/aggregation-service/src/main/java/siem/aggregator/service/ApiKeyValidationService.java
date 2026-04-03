@@ -14,27 +14,24 @@ public class ApiKeyValidationService {
     private final RestClient restClient;
 
     public ApiKeyValidationService(
-        RestClient.Builder restClientBuilder,
         @Value("${account.service.url}") String accountServiceUrl) {
-        this.restClient = restClientBuilder.baseUrl(accountServiceUrl).build();
+        this.restClient = RestClient.builder().baseUrl(accountServiceUrl).build();
     }
 
-    @Cacheable(value = "apiKeys", key = "#apiKey", unless = "#result == false")
-    public boolean isValidApiKey(String apiKey) {
+    @Cacheable(value = "apiKeys", key = "#apiKey", unless = "#result == null")
+    public String getOrganisationId(String apiKey) {
         try {
-            restClient.get()
+            return restClient.get()
                 .uri("/organisations/api-keys/{key}", apiKey)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
                     throw new InvalidApiKeyException();
                 })
-                .toBodilessEntity();
-
-            return true;
+                .body(String.class);
         } catch (InvalidApiKeyException e) {
-            return false;
+            return null;
         } catch (Exception e) {
-            return false;
+            return null;
         }
     }
 

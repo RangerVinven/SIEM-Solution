@@ -24,7 +24,9 @@ public class ApiKeyFilter implements HandlerInterceptor {
             return false;
         }
 
-        if (apiKeyValidationService.isValidApiKey(apiKey)) {
+        String organisationId = apiKeyValidationService.getOrganisationId(apiKey);
+        if (organisationId != null) {
+            request.setAttribute("organisationId", organisationId);
             return true;
         }
 

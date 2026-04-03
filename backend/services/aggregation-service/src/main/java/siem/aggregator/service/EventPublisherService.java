@@ -14,9 +14,19 @@ public class EventPublisherService {
     
     private final KafkaTemplate<String, RawSiemEvent> kafkaTemplate;
 
-    public void publishEvent(List<RawSiemEvent> events) {
+    public void publishEvent(List<RawSiemEvent> events, String organisationId) {
         for (RawSiemEvent event : events) {
-            kafkaTemplate.send("raw-logs", event)
+            RawSiemEvent eventWithOrg = new RawSiemEvent(
+                event.timestamp(),
+                organisationId,
+                event.event(),
+                event.host(),
+                event.message(),
+                event.log(),
+                event.tags(),
+                event.labels()
+            );
+            kafkaTemplate.send("raw-logs", eventWithOrg)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
                         System.err.println("Failed to publish event: " + ex.getMessage());
