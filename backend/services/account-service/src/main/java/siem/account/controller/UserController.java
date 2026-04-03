@@ -21,6 +21,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequestMapping("/api/account")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService service;
