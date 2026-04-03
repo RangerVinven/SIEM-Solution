@@ -11,5 +11,6 @@ import siem.account.entity.Organisation;
 @Repository
 public interface OrganisationRepository extends JpaRepository<Organisation, UUID> {
     Optional<Organisation> findById(UUID id);
-    boolean existsByApiKey(String apiKey);
+    Optional<Organisation> findByApiKey(UUID apiKey);
+    boolean existsByApiKey(UUID apiKey);
 }

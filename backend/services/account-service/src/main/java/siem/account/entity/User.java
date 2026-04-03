@@ -33,4 +33,6 @@ public class User {
     private Role role;
 
     private UUID organisationId;
+
+    private UUID schoolId;
 }

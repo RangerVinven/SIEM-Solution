@@ -2,6 +2,7 @@ package siem.account.service;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,13 @@ import siem.models.UserPrincipal;
 
 import org.springframework.stereotype.Service;
 
+import siem.account.dto.SchoolRequest;
+import siem.account.repository.SchoolRepository;
+import siem.account.entity.School;
+import java.util.List;
+import org.springframework.kafka.core.KafkaTemplate;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrganisationService {
@@ -29,18 +37,32 @@ public class OrganisationService {
     private final UserRepository userRepo;
     private final UserMapper userMapper;
     private final PasswordEncoder encoder;
+    private final SchoolRepository schoolRepo;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     public OrganisationResponse createOrganisation(CreateOrganisationRequest request) {
         Organisation newOrg = mapper.toEntity(request);
         newOrg.setApiKey(UUID.randomUUID());
-        return mapper.toResponse(repo.save(newOrg));
+        Organisation saved = repo.save(newOrg);
+        
+        kafkaTemplate.send("organisation-created", saved.getId().toString());
+
+        // Links the user who created the organisation
+        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userRepo.findById(UUID.fromString(currentUser.userId())).orElseThrow();
+        user.setOrganisationId(saved.getId());
+        userRepo.save(user);
+
+        return mapper.toResponse(saved);
     }
 
     public OrganisationResponse getOrganisation(String id) {
-        return mapper.toResponse(
-            repo.findById(UUID.fromString(id))
-                .orElseThrow(() -> new RuntimeException("Organisation not found"))
-        );
+        return mapper.toResponse(getOrganisationEntity(id));
+    }
+
+    public Organisation getOrganisationEntity(String id) {
+        return repo.findById(UUID.fromString(id))
+                .orElseThrow(() -> new RuntimeException("Organisation not found"));
     }
 
     public OrganisationResponse updateOrganisation(String id, UpdateOrganisationRequest request) {
@@ -50,14 +72,33 @@ public class OrganisationService {
             throw new AccessDeniedException("Forbidden");
         }
 
-        if (!"OWNER".equals(currentUser.role())) {
+        Organisation existingOrg = getOrganisationEntity(id);
+        existingOrg.setName(request.getName());
+        existingOrg.setCouncilIctPhone(request.getCouncilIctPhone());
+        existingOrg.setCouncilPortalUrl(request.getCouncilPortalUrl());
+        existingOrg.setCouncilIspProvider(request.getCouncilIspProvider());
+
+        return mapper.toResponse(repo.save(existingOrg));
+    }
+
+    public School createSchool(String councilId, SchoolRequest request) {
+        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (currentUser.organisationId() == null || !currentUser.organisationId().equals(councilId)) {
             throw new AccessDeniedException("Forbidden");
         }
 
-        Organisation existingOrg = repo.findById(UUID.fromString(id)).orElseThrow(() -> new RuntimeException("Organisation not found"));
+        School school = new School();
+        school.setOrganisationId(UUID.fromString(councilId));
+        school.setName(request.getName());
+        school.setBuildingCode(request.getBuildingCode());
+        school.setSiteLocation(request.getSiteLocation());
+        school.setHostnameRegex(request.getHostnameRegex());
+        school.setLocalHelpdeskPhone(request.getLocalHelpdeskPhone());
+        school.setServerRoomLocation(request.getServerRoomLocation());
+        school.setServerCabinetKeyInfo(request.getServerCabinetKeyInfo());
 
-        mapper.updateEntity(request, existingOrg);
-        return mapper.toResponse(repo.save(existingOrg));
+        return schoolRepo.save(school);
     }
 
     public void deleteOrganisation(String id) {
@@ -115,9 +156,13 @@ public class OrganisationService {
         return userMapper.toResponse(savedUser);
     }
 
-    public void validateAPIKey(String apiKey) {
-        if (!repo.existsByApiKey(apiKey)) {
-            throw new AccessDeniedException("Invalid API key");
-        }
+    public String validateAPIKey(String apiKey) {
+        Organisation org = repo.findByApiKey(UUID.fromString(apiKey))
+            .orElseThrow(() -> new AccessDeniedException("Invalid API key"));
+        return org.getId().toString();
+    }
+
+    public List<School> getSchoolsForCouncil(String councilId) {
+        return schoolRepo.findByOrganisationId(UUID.fromString(councilId));
     }
 }

@@ -12,19 +12,20 @@ import siem.account.dto.UpdateOrganisationRequest;
 import siem.account.dto.OrganisationResponse;
 import siem.account.dto.AddEmployeeRequest;
 import siem.account.dto.UserResponse;
+import siem.account.dto.SchoolRequest;
 import org.springframework.web.bind.annotation.RestController;
 import siem.account.service.OrganisationService;
 import siem.account.service.UserService;
 
-@RestController
-public class OrganisationController {
-   private final OrganisationService service;
-   private final UserService userService;
+import siem.account.entity.Organisation;
+import siem.account.entity.School;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 
-    public OrganisationController(OrganisationService service, UserService userService) {
-        this.service = service;
-        this.userService = userService;
-    }
+@RestController
+@RequiredArgsConstructor
+public class OrganisationController {
+    private final OrganisationService service;
 
     @PostMapping("/organisations")
     public OrganisationResponse createOrganisation(@RequestBody CreateOrganisationRequest request) {
@@ -32,8 +33,8 @@ public class OrganisationController {
     }
 
     @GetMapping("/organisations/{id}")
-    public OrganisationResponse getOrganisation(@PathVariable String id) {
-        return service.getOrganisation(id);
+    public Organisation getOrganisation(@PathVariable String id) {
+        return service.getOrganisationEntity(id);
     }
 
     @PutMapping("/organisations/{id}")
@@ -52,7 +53,17 @@ public class OrganisationController {
     }
 
     @GetMapping("/organisations/api-keys/{id}")
-    public void getApiKey(@PathVariable String id) {
-        service.validateAPIKey(id);
+    public String getApiKey(@PathVariable String id) {
+        return service.validateAPIKey(id);
+    }
+
+    @PostMapping("/organisations/{id}/schools")
+    public School createSchool(@PathVariable String id, @RequestBody SchoolRequest request) {
+        return service.createSchool(id, request);
+    }
+
+    @GetMapping("/organisations/{id}/schools")
+    public List<School> getSchools(@PathVariable String id) {
+        return service.getSchoolsForCouncil(id);
     }
 }

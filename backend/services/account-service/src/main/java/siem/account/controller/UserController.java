@@ -14,12 +14,21 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import siem.account.repository.UserRepository;
+import siem.account.entity.User;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 public class UserController {
     private final UserService service;
-    
-    public UserController(UserService service) {
-        this.service = service;
+    private final UserRepository repository;
+
+    @GetMapping("/organisations/{id}/users")
+    public List<User> getUsersByOrg(@PathVariable String id) {
+        return repository.findByOrganisationId(UUID.fromString(id));
     }
 
     @PostMapping("/login")

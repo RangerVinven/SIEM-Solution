@@ -58,7 +58,7 @@ public class UserService {
         );
     }
 
-    private User getUserEntityWithAccessCheck(String id) {
+    private User getUserEntity(String id) {
         UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = repo.findById(UUID.fromString(id)).orElseThrow(() -> new RuntimeException("User not found"));
         
@@ -73,18 +73,18 @@ public class UserService {
     }
 
     public UserResponse getUser(String id) {
-        User user = getUserEntityWithAccessCheck(id);
+        User user = getUserEntity(id);
         return mapper.toResponse(user);
     }
 
     public UserResponse updateUser(String id, UpdateUserRequest request) {
-        User existingUser = getUserEntityWithAccessCheck(id);
+        User existingUser = getUserEntity(id);
         mapper.updateEntity(request, existingUser);
         return mapper.toResponse(repo.save(existingUser));
     }
 
     public void deleteUser(String id) {
-        User user = getUserEntityWithAccessCheck(id);
+        User user = getUserEntity(id);
         repo.delete(user);
     }
 }

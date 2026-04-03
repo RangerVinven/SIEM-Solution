@@ -25,6 +25,12 @@ public class Organisation {
     @Column(nullable = false)
     private String name;
 
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(unique = true)
     private UUID apiKey;
+
+    private String councilIctPhone;
+
+    private String councilPortalUrl;
+
+    private String councilIspProvider;
 }
