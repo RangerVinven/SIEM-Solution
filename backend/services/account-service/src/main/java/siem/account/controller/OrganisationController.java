@@ -23,6 +23,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequestMapping("/api/account")
 @RequiredArgsConstructor
 public class OrganisationController {
     private final OrganisationService service;
