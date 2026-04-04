@@ -7,14 +7,93 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import siem.models.RawSiemEvent;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import siem.models.RawSiemEvent;
+
+import siem.normalisation.repository.NormalisationMappingRepository;
+import siem.normalisation.entity.NormalisationMapping;
+import java.util.Optional;
+
+@Slf4j
 @Service
-@RequiredArgsConstructor
 public class NormalisationService {
 
     private final KafkaTemplate<String, RawSiemEvent> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+    private final NormalisationMappingRepository mappingRepository;
+
+    public NormalisationService(
+            KafkaTemplate<String, RawSiemEvent> kafkaTemplate,
+            NormalisationMappingRepository mappingRepository) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.mappingRepository = mappingRepository;
+        this.objectMapper = new ObjectMapper();
+    }
 
     @KafkaListener(topics = "raw-logs", groupId = "normalisation-service")
     public void normaliseLogs(RawSiemEvent event) {
+        try {
+            RawSiemEvent normalisedEvent = event;
 
+            if (event.event().dataset() != null) {
+                normalisedEvent = performDynamicMapping(event);
+            }
+
+            kafkaTemplate.send("normalised-logs", normalisedEvent);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    private RawSiemEvent performDynamicMapping(RawSiemEvent event) {
+        try {
+            String sourceId = extractSourceId(event);
+            if (sourceId == null) return event;
+
+            Optional<NormalisationMapping> mappingOpt = mappingRepository.findBySourceDatasetAndSourceId(
+                event.event().dataset(), sourceId);
+
+            if (mappingOpt.isEmpty()) return event;
+
+            NormalisationMapping mapping = mappingOpt.get();
+
+            return new RawSiemEvent(
+                event.timestamp(),
+                event.organisationId(),
+                new RawSiemEvent.Event(
+                    event.event().id(),
+                    event.event().kind(),
+                    mapping.getTargetCategory() != null ? mapping.getTargetCategory() : event.event().category(),
+                    event.event().type(),
+                    event.event().dataset(),
+                    event.event().provider(),
+                    mapping.getTargetAction() != null ? mapping.getTargetAction() : event.event().action(),
+                    mapping.getTargetOutcome() != null ? mapping.getTargetOutcome() : event.event().outcome(),
+                    event.event().original()
+                ),
+                event.host(),
+                event.message(),
+                event.log(),
+                event.tags(),
+                event.labels()
+            );
+
+        } catch (Exception e) {
+            return event;
+        }
+    }
+
+    private String extractSourceId(RawSiemEvent event) {
+        try {
+            if ("windows.event".equals(event.event().dataset())) {
+                JsonNode winEvent = objectMapper.readTree(event.event().original());
+                return winEvent.get("Id").asText();
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
