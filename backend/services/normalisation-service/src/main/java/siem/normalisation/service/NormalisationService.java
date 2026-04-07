@@ -10,7 +10,6 @@ import siem.models.RawSiemEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import siem.models.RawSiemEvent;
 
 import siem.normalisation.repository.NormalisationMappingRepository;
 import siem.normalisation.entity.NormalisationMapping;
@@ -34,24 +33,22 @@ public class NormalisationService {
 
     @KafkaListener(topics = "raw-logs", groupId = "normalisation-service")
     public void normaliseLogs(RawSiemEvent event) {
-        try {
-            RawSiemEvent normalisedEvent = event;
+        RawSiemEvent normalisedEvent = event;
 
-            if (event.event().dataset() != null) {
-                normalisedEvent = performDynamicMapping(event);
-            }
-
-            kafkaTemplate.send("normalised-logs", normalisedEvent);
-        } catch (Exception e) {
-            throw e;
+        if (event.event().dataset() != null) {
+            normalisedEvent = mapEventFields(event);
         }
+
+        kafkaTemplate.send("normalised-logs", normalisedEvent);
     }
 
-    private RawSiemEvent performDynamicMapping(RawSiemEvent event) {
+    // Gets the event id from the raw log, and sets the event category (i.e "authentication"), the action (i.e, "logon-failed"), and the outcome (i.e, "failure")
+    private RawSiemEvent mapEventFields(RawSiemEvent event) {
         try {
             String sourceId = extractSourceId(event);
             if (sourceId == null) return event;
 
+            // Gets the event mappings
             Optional<NormalisationMapping> mappingOpt = mappingRepository.findBySourceDatasetAndSourceId(
                 event.event().dataset(), sourceId);
 
@@ -59,9 +56,10 @@ public class NormalisationService {
 
             NormalisationMapping mapping = mappingOpt.get();
 
+            // Creates a new event with the new mapping (new category, action, and outcome)
             return new RawSiemEvent(
                 event.timestamp(),
-                event.organisationId(),
+                event.schoolId(),
                 new RawSiemEvent.Event(
                     event.event().id(),
                     event.event().kind(),
@@ -88,8 +86,8 @@ public class NormalisationService {
     private String extractSourceId(RawSiemEvent event) {
         try {
             if ("windows.event".equals(event.event().dataset())) {
-                JsonNode winEvent = objectMapper.readTree(event.event().original());
-                return winEvent.get("Id").asText();
+                JsonNode windowsEvent = objectMapper.readTree(event.event().original());
+                return windowsEvent.get("Id").asText();
             }
             return null;
         } catch (Exception e) {

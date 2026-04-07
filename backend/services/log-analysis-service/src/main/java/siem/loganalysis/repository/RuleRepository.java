@@ -7,5 +7,5 @@ import java.util.List;
 
 @Repository
 public interface RuleRepository extends JpaRepository<Rule, Long> {
-    List<Rule> findByOrganisationIdAndEnabledTrue(String organisationId);
+    List<Rule> findBySchoolIdAndEnabledTrue(String schoolId);
 }

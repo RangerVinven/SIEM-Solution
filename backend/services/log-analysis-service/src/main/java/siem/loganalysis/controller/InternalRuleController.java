@@ -16,9 +16,10 @@ public class InternalRuleController {
     private final RuleBootstrapService bootstrapService;
     private final GlobalRuleTemplateRepository templateRepository;
 
+    // Applies pre-built rules whenever a school is created
     @PostMapping("/bootstrap")
-    public void bootstrap(@RequestParam String organisationId) {
-        bootstrapService.bootstrap(organisationId);
+    public void bootstrap(@RequestParam String schoolId) {
+        bootstrapService.bootstrap(schoolId);
     }
 
     @GetMapping("/templates")

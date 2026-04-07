@@ -14,7 +14,7 @@ public class Rule {
     private Long id;
 
     @Column(nullable = false)
-    private String organisationId;
+    private String schoolId;
 
     @Column(nullable = false)
     private String name;

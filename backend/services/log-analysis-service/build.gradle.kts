@@ -8,11 +8,6 @@ group = "siem.log-analysis"
 version = "0.0.1-SNAPSHOT"
 description = "Log analysis service"
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
-}
 
 configurations {
 	compileOnly {

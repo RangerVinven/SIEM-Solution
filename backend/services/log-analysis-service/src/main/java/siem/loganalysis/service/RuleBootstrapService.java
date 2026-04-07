@@ -22,31 +22,31 @@ public class RuleBootstrapService {
     private final RuleRepository repository;
     private final GlobalRuleTemplateRepository templateRepository;
 
-    @KafkaListener(topics = "organisation-created", groupId = "log-analysis-service")
-    public void bootstrap(String organisationId) {
-        try {
-            List<GlobalRuleTemplate> templates = templateRepository.findAll();
-            List<Rule> rulesToCreate = new ArrayList<>();
+    @KafkaListener(
+        topics = "school-created", 
+        groupId = "log-analysis-service-bootstrap",
+        properties = {"value.deserializer=org.apache.kafka.common.serialization.StringDeserializer"}
+    )
+    public void bootstrap(String schoolId) {
+        List<GlobalRuleTemplate> templates = templateRepository.findAll();
+        List<Rule> rulesToCreate = new ArrayList<>();
 
-            for (GlobalRuleTemplate template : templates) {
-                Rule rule = new Rule();
-                rule.setOrganisationId(organisationId);
-                rule.setName(template.getName());
-                rule.setDescription(template.getDescription());
-                rule.setSeverity(template.getSeverity());
-                rule.setFieldToWatch(template.getFieldToWatch());
-                rule.setExpectedValue(template.getExpectedValue());
-                rule.setThreshold(template.getThreshold());
-                rule.setWindowMinutes(template.getWindowMinutes());
-                rule.setRemediationSteps(new ArrayList<>(template.getRemediationSteps()));
-                rule.setEnabled(true);
-                
-                rulesToCreate.add(rule);
-            }
+        for (GlobalRuleTemplate template : templates) {
+            Rule rule = new Rule();
+            rule.setSchoolId(schoolId);
+            rule.setName(template.getName());
+            rule.setDescription(template.getDescription());
+            rule.setSeverity(template.getSeverity());
+            rule.setFieldToWatch(template.getFieldToWatch());
+            rule.setExpectedValue(template.getExpectedValue());
+            rule.setThreshold(template.getThreshold());
+            rule.setWindowMinutes(template.getWindowMinutes());
+            rule.setRemediationSteps(new ArrayList<>(template.getRemediationSteps()));
+            rule.setEnabled(true);
 
-            repository.saveAll(rulesToCreate);
-        } catch (Exception e) {
-            throw e;
+            rulesToCreate.add(rule);
         }
+
+        repository.saveAll(rulesToCreate);
     }
 }

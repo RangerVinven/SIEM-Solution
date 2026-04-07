@@ -8,11 +8,6 @@ group = "siem.normalisation"
 version = "0.0.1-SNAPSHOT"
 description = "Log normalisation service"
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
-}
 
 configurations {
 	compileOnly {

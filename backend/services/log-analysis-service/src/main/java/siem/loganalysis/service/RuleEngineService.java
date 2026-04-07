@@ -1,12 +1,15 @@
 package siem.loganalysis.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import siem.models.RawSiemEvent;
 import siem.loganalysis.entity.Rule;
 import siem.loganalysis.repository.RuleRepository;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -26,35 +29,30 @@ public class RuleEngineService {
     private final StringRedisTemplate redisTemplate;
     private final KafkaTemplate<String, AlertEvent> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private final RestClient accountClient;
+    private final RestClient agentClient;
+    private final Map<String, String> schoolNameCache = new ConcurrentHashMap<>();
+    private final Map<String, String> locationCache = new ConcurrentHashMap<>();
 
-    public RuleEngineService(
-            RuleRepository ruleRepository,
-            StringRedisTemplate redisTemplate,
-            KafkaTemplate<String, AlertEvent> kafkaTemplate) {
+    public RuleEngineService(RuleRepository ruleRepository, StringRedisTemplate redisTemplate, KafkaTemplate<String, AlertEvent> kafkaTemplate, @Value("${account.service.url}") String accountServiceUrl, @Value("${agent.service.url}") String agentServiceUrl) {
         this.ruleRepository = ruleRepository;
         this.redisTemplate = redisTemplate;
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = new ObjectMapper();
+        this.accountClient = RestClient.builder().baseUrl(accountServiceUrl).build();
+        this.agentClient = RestClient.builder().baseUrl(agentServiceUrl).build();
     }
 
     @KafkaListener(topics = "normalised-logs", groupId = "log-analysis-service")
     public void analyze(RawSiemEvent event) {
-        log.info("Received event for analysis: {} from org: {}", event.event().id(), event.organisationId());
-        
-        if (event.organisationId() == null) {
-            log.warn("Event {} has no organisationId, skipping.", event.event().id());
+        if (event.schoolId() == null) {
             return;
         }
-
-        List<Rule> activeRules = ruleRepository.findByOrganisationIdAndEnabledTrue(event.organisationId());
-        log.info("Found {} active rules for org: {}", activeRules.size(), event.organisationId());
-        
-        // Convert event to Map for JsonPath lookup
+        List<Rule> activeRules = ruleRepository.findBySchoolIdAndEnabledTrue(event.schoolId());
         Map<String, Object> eventMap = objectMapper.convertValue(event, Map.class);
 
         for (Rule rule : activeRules) {
             if (evaluate(rule, eventMap, event)) {
-                log.info("Rule '{}' matched for event: {}", rule.getName(), event.event().id());
                 publishAlert(rule, event);
             }
         }
@@ -62,12 +60,10 @@ public class RuleEngineService {
 
     private boolean evaluate(Rule rule, Map<String, Object> eventMap, RawSiemEvent originalEvent) {
         try {
-            // Use JsonPath to find the field (e.g., "$.event.outcome")
             String path = "$." + rule.getFieldToWatch();
             Object value = JsonPath.read(eventMap, path);
             
-            log.debug("Evaluating rule '{}': field '{}', expected '{}', actual '{}'", 
-                rule.getName(), rule.getFieldToWatch(), rule.getExpectedValue(), value);
+            rule.getName(), rule.getFieldToWatch(), rule.getExpectedValue(), value);
 
             if (value == null || !String.valueOf(value).equals(rule.getExpectedValue())) {
                 return false;
@@ -85,12 +81,11 @@ public class RuleEngineService {
 
     private boolean checkThreshold(Rule rule, RawSiemEvent event) {
         String key = String.format("counter:%s:%s:%s", 
-            rule.getOrganisationId(), 
+            rule.getSchoolId(), 
             rule.getId(), 
             event.host().hostname());
 
         Long count = redisTemplate.opsForValue().increment(key);
-        log.info("Threshold count for rule '{}' on host '{}': {}", rule.getName(), event.host().hostname(), count);
         
         if (count != null && count == 1) {
             redisTemplate.expire(key, Duration.ofMinutes(rule.getWindowMinutes()));
@@ -99,12 +94,38 @@ public class RuleEngineService {
         return count != null && count >= rule.getThreshold();
     }
 
+    private String getSchoolName(String schoolId) {
+        return schoolNameCache.computeIfAbsent(schoolId, id -> {
+            try {
+                return accountClient.get()
+                        .uri("/api/account/internal/schools/{id}/name", id)
+                        .retrieve()
+                        .body(String.class);
+            } catch (Exception e) {
+                return "Unknown School";
+            }
+        });
+    }
+
+    private String getLocation(String hostname) {
+        return locationCache.computeIfAbsent(hostname, h -> {
+            try {
+                return agentClient.get()
+                        .uri("/agents/internal/location?hostname={h}", h)
+                        .retrieve()
+                        .body(String.class);
+            } catch (Exception e) {
+                return "Unknown Location";
+            }
+        });
+    }
+
     private void publishAlert(Rule rule, RawSiemEvent event) {
-        String schoolName = "Unknown School";
-        String location = "Unknown Location";
+        String schoolName = getSchoolName(event.schoolId());
+        String location = getLocation(event.host().hostname());
 
         AlertEvent alert = new AlertEvent(
-            event.organisationId(),
+            event.schoolId(),
             schoolName,
             location,
             rule.getName(),
@@ -115,7 +136,6 @@ public class RuleEngineService {
             Instant.now().getEpochSecond()
         );
 
-        log.info("Publishing alert: {} for org: {}", rule.getName(), event.organisationId());
         kafkaTemplate.send("alerts", alert);
     }
 }

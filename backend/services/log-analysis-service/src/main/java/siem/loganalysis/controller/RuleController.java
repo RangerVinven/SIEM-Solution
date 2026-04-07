@@ -20,14 +20,28 @@ public class RuleController {
 
     @GetMapping
     public List<Rule> getRules(@AuthenticationPrincipal UserPrincipal principal) {
-        return repository.findByOrganisationIdAndEnabledTrue(principal.organisationId());
+        return repository.findBySchoolIdAndEnabledTrue(principal.schoolId());
+    }
+
+    @GetMapping("/{id}")
+    public Rule getRule(@AuthenticationPrincipal UserPrincipal principal, @PathVariable Long id) {
+        Rule rule = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Rule not found"));
+
+        if (!rule.getSchoolId().equals(principal.schoolId())) {
+            throw new AccessDeniedException("Forbidden");
+        }
+
+        return rule;
     }
 
     @PostMapping
     public Rule createRule(@AuthenticationPrincipal UserPrincipal principal, @RequestBody RuleRequest request) {
         Rule rule = new Rule();
-        rule.setOrganisationId(principal.organisationId());
+
+        rule.setSchoolId(principal.schoolId());
         updateRuleFromRequest(rule, request);
+
         return repository.save(rule);
     }
 
@@ -40,7 +54,7 @@ public class RuleController {
         Rule rule = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rule not found"));
 
-        if (!rule.getOrganisationId().equals(principal.organisationId())) {
+        if (!rule.getSchoolId().equals(principal.schoolId())) {
             throw new AccessDeniedException("Forbidden");
         }
 
@@ -53,7 +67,7 @@ public class RuleController {
         Rule rule = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Rule not found"));
 
-        if (!rule.getOrganisationId().equals(principal.organisationId())) {
+        if (!rule.getSchoolId().equals(principal.schoolId())) {
             throw new AccessDeniedException("Forbidden");
         }
 
