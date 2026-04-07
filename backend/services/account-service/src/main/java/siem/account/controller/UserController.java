@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import siem.account.repository.UserRepository;
-import siem.account.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import siem.models.UserPrincipal;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -25,45 +25,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService service;
-    private final UserRepository repository;
 
-    @GetMapping("/organisations/{id}/users")
-    public List<User> getUsersByOrg(@PathVariable String id) {
-        return repository.findByOrganisationId(UUID.fromString(id));
+    @GetMapping("/schools/{id}/users")
+    public List<UserResponse> getUsersBySchool(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id) {
+        return service.getUsersBySchool(id, principal);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Void> login(@RequestBody LoginRequest request) {
-
         String token = service.login(request);
-
-        ResponseCookie cookie = ResponseCookie.from("token", token)
-            .httpOnly(true)
-            .secure(true)
-            .path("/")
-            .maxAge(24 * 60 * 60)
-            .sameSite("Strict")
-            .build();
-
         return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .header(HttpHeaders.SET_COOKIE, buildTokenCookie(token).toString())
             .build();
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        ResponseCookie cookie = ResponseCookie.from("jwt-token", "")
-        .httpOnly(true)
-        .path("/")
-        .maxAge(0)
-        .build();
-
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+            .httpOnly(true)
+            .path("/")
+            .maxAge(0)
+            .build();
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
     }
 
+    @GetMapping("")
+    public UserResponse getMe(@AuthenticationPrincipal UserPrincipal principal) {
+        return service.getUser(principal.userId());
+    }
+
     @PostMapping("/users")
-    public UserResponse registerUser(@RequestBody CreateUserRequest request) {
-        return service.registerUser(request);
+    public ResponseEntity<UserResponse> registerUser(@RequestBody CreateUserRequest request) {
+        UserResponse user = service.registerUser(request);
+        String token = service.generateTokenForUser(user.id());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, buildTokenCookie(token).toString())
+                .body(user);
     }
 
     @GetMapping("/users/{id}")
@@ -80,5 +77,15 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         service.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private ResponseCookie buildTokenCookie(String token) {
+        return ResponseCookie.from("token", token)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(24 * 60 * 60)
+                .sameSite("Strict")
+                .build();
     }
 }

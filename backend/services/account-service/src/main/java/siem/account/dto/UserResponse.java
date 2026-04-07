@@ -6,5 +6,5 @@ public record UserResponse(
     String lastName,
     String email,
     String role,
-    String organisationId
+    String schoolId
 ) {}

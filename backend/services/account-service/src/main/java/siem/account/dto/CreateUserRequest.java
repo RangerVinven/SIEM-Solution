@@ -21,10 +21,4 @@ public class CreateUserRequest {
     @NotBlank(message = "Password is required")
     @Length(min = 8, message = "Password must be at least 8 characters long")
     private String password;
-
-    // @NotBlank(message = "Role is required")
-    // private String role;
-
-    @NotBlank(message = "Organisation ID is required")
-    private String organisationId;
 }

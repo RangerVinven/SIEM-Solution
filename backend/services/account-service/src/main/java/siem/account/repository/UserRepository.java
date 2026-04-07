@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import siem.account.dto.CreateUserRequest;
 import siem.account.entity.User;
 import java.util.List;
 
@@ -14,5 +13,5 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    List<User> findByOrganisationId(UUID organisationId);
+    List<User> findBySchoolId(UUID schoolId);
 }

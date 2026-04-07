@@ -32,7 +32,5 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    private UUID organisationId;
-
     private UUID schoolId;
 }

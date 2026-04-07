@@ -20,7 +20,7 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "organisationId", ignore = true)
+    @Mapping(target = "schoolId", ignore = true)
     User toEntity(AddEmployeeRequest request);
 
     UserResponse toResponse(User entity);
@@ -29,6 +29,6 @@ public interface UserMapper {
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "role", ignore = true)
-    @Mapping(target = "organisationId", ignore = true)
+    @Mapping(target = "schoolId", ignore = true)
     void updateEntity(UpdateUserRequest request, @MappingTarget User entity);
 }
