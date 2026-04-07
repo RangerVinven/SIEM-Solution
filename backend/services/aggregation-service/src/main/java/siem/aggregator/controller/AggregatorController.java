@@ -28,8 +28,8 @@ public class AggregatorController {
     @PostMapping("/aggregate")
     public void aggregate(
             @RequestBody List<RawSiemEvent> eventPayloadList,
-            @RequestAttribute("organisationId") String organisationId) {
-        service.publishEvent(eventPayloadList, organisationId);
+            @RequestAttribute("schoolId") String schoolId) {
+        service.publishEvent(eventPayloadList, schoolId);
     }
 
     @PostMapping("/heartbeat")

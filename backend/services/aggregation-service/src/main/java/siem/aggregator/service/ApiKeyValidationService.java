@@ -19,10 +19,10 @@ public class ApiKeyValidationService {
     }
 
     @Cacheable(value = "apiKeys", key = "#apiKey", unless = "#result == null")
-    public String getOrganisationId(String apiKey) {
+    public String getSchoolId(String apiKey) {
         try {
             return restClient.get()
-                .uri("/organisations/api-keys/{key}", apiKey)
+                .uri("/api/account/schools/api-keys/{key}", apiKey)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
                     throw new InvalidApiKeyException();
