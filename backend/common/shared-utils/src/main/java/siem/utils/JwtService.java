@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class JwtService {
-    @Value("${jwt.secret.key}")
+    @Value("${JWT_SECRET_KEY}")
     private String secretKey;
     private SecretKey KEY;
 
@@ -23,13 +23,14 @@ public class JwtService {
         this.KEY = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateToken(UUID userId, UUID organisationId, String role, String firstName, String lastName) {
+    public String generateToken(UUID userId, UUID schoolId, String role, String firstName, String lastName, String schoolName) {
         return Jwts.builder()
             .subject(userId.toString())
-            .claim("orgId", organisationId != null ? organisationId.toString() : null)
+            .claim("schoolId", schoolId != null ? schoolId.toString() : null)
             .claim("role", role)
             .claim("firstName", firstName)
             .claim("lastName", lastName)
+            .claim("schoolName", schoolName)
             .issuedAt(new Date())
             .expiration(new Date(System.currentTimeMillis() + 86400000))
             .signWith(KEY)
@@ -40,8 +41,8 @@ public class JwtService {
         return extractClaim(token, "sub");
     }
 
-    public String extractOrgId(String token) {
-        return extractClaim(token, "orgId");
+    public String extractSchoolId(String token) {
+        return extractClaim(token, "schoolId");
     }
 
     public String extractRole(String token) {
@@ -54,6 +55,10 @@ public class JwtService {
 
     public String extractLastName(String token) {
         return extractClaim(token, "lastName");
+    }
+
+    public String extractSchoolName(String token) {
+        return extractClaim(token, "schoolName");
     }
 
     private String extractClaim(String token, String claimKey) {
@@ -77,4 +82,3 @@ public class JwtService {
         }
     }
 }
-

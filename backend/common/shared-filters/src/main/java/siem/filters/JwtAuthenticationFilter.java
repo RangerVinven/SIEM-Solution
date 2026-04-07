@@ -35,13 +35,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 String userId = jwtService.extractUserId(token);
-                String orgId = jwtService.extractOrgId(token);
+                String schoolId = jwtService.extractSchoolId(token);
                 String role = jwtService.extractRole(token);
                 String firstName = jwtService.extractFirstName(token);
                 String lastName = jwtService.extractLastName(token);
-                
+                String schoolName = jwtService.extractSchoolName(token);
+
                 if (userId != null) {
-                    UserPrincipal principal = new UserPrincipal(userId, orgId, role, firstName, lastName);
+                    UserPrincipal principal = new UserPrincipal(userId, schoolId, role, firstName, lastName, schoolName);
                     UsernamePasswordAuthenticationToken auth = 
                         new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
                     

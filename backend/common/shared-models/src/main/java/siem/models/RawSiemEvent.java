@@ -7,7 +7,7 @@ import java.util.Map;
 
 public record RawSiemEvent(
     @JsonProperty("@timestamp") String timestamp,
-    String organisationId,
+    String schoolId,
     Event event,
     Host host,
     String message,

@@ -3,7 +3,7 @@ package siem.models;
 import java.util.List;
 
 public record AlertEvent(
-    String organisationId,
+    String schoolId,
     String schoolName,
     String location,
     String ruleName,

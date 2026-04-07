@@ -1,9 +1,10 @@
 package siem.models;
 
 public record UserPrincipal(
-    String userId, 
-    String organisationId, 
-    String role, 
+    String userId,
+    String schoolId,
+    String role,
     String firstName,
-    String lastName
+    String lastName,
+    String schoolName
 ) {}
