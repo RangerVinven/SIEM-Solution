@@ -19,7 +19,6 @@ import (
 )
 
 func main() {
-	// Setup structured logging
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: "2006-01-02T15:04:05.999Z07:00"})
 
@@ -45,11 +44,9 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	// Initialize the Sender with WaitGroup for graceful shutdown
 	httpSender := sender.NewHTTPSender(cfg, &wg)
 	go httpSender.Start(ctx)
 
-	// Initialize Collectors based on OS
 	if runtime.GOOS == "windows" {
 		winCollector := collector.NewWindowsEventCollector(cfg, &wg)
 		if winCollector != nil {
@@ -66,17 +63,13 @@ func main() {
 		}
 	}
 
-	// Handle graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
 	log.Info().Msg("Received shutdown signal, initiating graceful shutdown...")
-	
-	// Cancel context to stop collectors and tell sender to flush
 	cancel()
 
-	// Wait for all components (specifically the sender flushing its batch) to finish
 	wg.Wait()
 	log.Info().Msg("Agent stopped successfully.")
 }

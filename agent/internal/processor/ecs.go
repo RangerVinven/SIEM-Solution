@@ -89,3 +89,7 @@ func NewECSEvent(message string) ECSEvent {
 		Message: message,
 	}
 }
+
+func GetHostname() string {
+	return hostInfo.Hostname
+}

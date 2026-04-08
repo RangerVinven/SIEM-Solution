@@ -19,6 +19,7 @@ type HTTPSender struct {
 	client        *http.Client
 	url           string
 	apiKey        string
+	hostname      string
 	batchSize     int
 	flushInterval time.Duration
 	eventChan     chan processor.ECSEvent
@@ -26,7 +27,6 @@ type HTTPSender struct {
 }
 
 func NewHTTPSender(cfg *config.Config, wg *sync.WaitGroup) *HTTPSender {
-	// Custom HTTP client with optimized transport for production
 	transport := &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
@@ -37,19 +37,18 @@ func NewHTTPSender(cfg *config.Config, wg *sync.WaitGroup) *HTTPSender {
 		client:        &http.Client{Timeout: 15 * time.Second, Transport: transport},
 		url:           cfg.Server.URL,
 		apiKey:        cfg.Server.APIKey,
+		hostname:      processor.GetHostname(),
 		batchSize:     cfg.Agent.BatchSize,
 		flushInterval: time.Duration(cfg.Agent.FlushInterval) * time.Millisecond,
-		eventChan:     make(chan processor.ECSEvent, cfg.Agent.BatchSize*5), // Increased buffer for production
+		eventChan:     make(chan processor.ECSEvent, cfg.Agent.BatchSize*5),
 		wg:            wg,
 	}
 }
 
-// Send queues an event to be sent to the SIEM
 func (s *HTTPSender) Send(event processor.ECSEvent) {
 	s.eventChan <- event
 }
 
-// Start begins the batching and sending loop
 func (s *HTTPSender) Start(ctx context.Context) {
 	s.wg.Add(1)
 	defer s.wg.Done()
@@ -58,12 +57,15 @@ func (s *HTTPSender) Start(ctx context.Context) {
 	ticker := time.NewTicker(s.flushInterval)
 	defer ticker.Stop()
 
+	heartbeatTicker := time.NewTicker(30 * time.Second)
+	defer heartbeatTicker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info().Msg("HTTP Sender shutting down, flushing remaining events...")
 			if len(batch) > 0 {
-				s.sendBatchWithRetry(context.Background(), batch) // Use background context to ensure it finishes
+				s.sendBatchWithRetry(context.Background(), batch)
 			}
 			return
 		case event := <-s.eventChan:
@@ -77,8 +79,23 @@ func (s *HTTPSender) Start(ctx context.Context) {
 				s.sendBatchWithRetry(ctx, batch)
 				batch = make([]processor.ECSEvent, 0, s.batchSize)
 			}
+		case <-heartbeatTicker.C:
+			s.sendHeartbeat(ctx)
 		}
 	}
+}
+
+func (s *HTTPSender) sendHeartbeat(ctx context.Context) {
+	url := s.url + "/heartbeat?hostname=" + s.hostname
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	req.Header.Set("X-API-Key", s.apiKey)
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		log.Debug().Err(err).Msg("Failed to send heartbeat")
+		return
+	}
+	defer resp.Body.Close()
 }
 
 func (s *HTTPSender) sendBatchWithRetry(ctx context.Context, batch []processor.ECSEvent) {
@@ -106,20 +123,19 @@ func (s *HTTPSender) sendBatchWithRetry(ctx context.Context, batch []processor.E
 
 		if resp.StatusCode >= 500 {
 			log.Warn().Int("status", resp.StatusCode).Msg("SIEM server error, will retry")
-			return err // Return error to trigger backoff for 5xx errors
+			return err
 		}
 
 		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 			log.Error().Int("status", resp.StatusCode).Msg("SIEM rejected logs (4xx), dropping batch")
-			return nil // Don't retry on 4xx errors (e.g., unauthorized, bad format)
+			return nil
 		}
 
 		return nil
 	}
 
-	// Exponential backoff configuration
 	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = 5 * time.Minute // Give up after 5 minutes of retrying a single batch
+	bo.MaxElapsedTime = 5 * time.Minute
 
 	err = backoff.RetryNotify(operation, backoff.WithContext(bo, ctx), func(err error, t time.Duration) {
 		log.Debug().Err(err).Dur("retry_in", t).Msg("Retrying batch transmission")

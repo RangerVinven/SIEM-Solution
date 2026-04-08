@@ -54,7 +54,6 @@ func (c *WindowsEventCollector) tailEventLog(ctx context.Context, channel string
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	// Keep track of the last time we checked to avoid duplicates
 	lastTime := time.Now().UTC().Format(time.RFC3339)
 
 	for {
@@ -63,7 +62,6 @@ func (c *WindowsEventCollector) tailEventLog(ctx context.Context, channel string
 			log.Debug().Str("channel", channel).Msg("Stopping Windows Event collection due to context cancellation")
 			return
 		case <-ticker.C:
-			// Query events newer than lastTime
 			script := fmt.Sprintf(`
 				$events = Get-WinEvent -FilterHashtable @{LogName='%s'; StartTime=[datetime]::Parse('%s')} -ErrorAction SilentlyContinue
 				if ($events) {
@@ -71,7 +69,6 @@ func (c *WindowsEventCollector) tailEventLog(ctx context.Context, channel string
 				}
 			`, channel, lastTime)
 
-			// Update lastTime for the next iteration (subtract a small delta to avoid missing edge-case events)
 			lastTime = time.Now().UTC().Format(time.RFC3339)
 
 			cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", script)
