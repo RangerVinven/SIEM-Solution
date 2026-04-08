@@ -23,6 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        // Gets the JWT token from the request
         String token = null;
         if (request.getCookies() != null) {
             token = Arrays.stream(request.getCookies())
@@ -32,6 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .orElse(null);
         }
 
+        // Gets the user data from the JWT token
         if (token != null) {
             try {
                 String userId = jwtService.extractUserId(token);
@@ -43,8 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (userId != null) {
                     UserPrincipal principal = new UserPrincipal(userId, schoolId, role, firstName, lastName, schoolName);
-                    UsernamePasswordAuthenticationToken auth = 
-                        new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
                     
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
