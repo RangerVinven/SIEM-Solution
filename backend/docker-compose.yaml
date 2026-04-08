@@ -8,9 +8,108 @@ services:
     volumes:
       - account-db-data:/var/lib/postgresql/data
     env_file:
-    - ./services/account-service/.env
+      - ./services/account-service/.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
-  # Need this, otherwise when people run "docker compose up", they'll get a permisison error and kafka won't start
+  analysis-db:
+    image: postgres:17
+    ports:
+      - "5002:5432"
+    volumes:
+      - analysis-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: analysis_db
+      POSTGRES_USER: siem_user
+      POSTGRES_PASSWORD: siem_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siem_user -d analysis_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  alert-db:
+    image: postgres:17
+    ports:
+      - "5003:5432"
+    volumes:
+      - alert-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: alert_db
+      POSTGRES_USER: siem_user
+      POSTGRES_PASSWORD: siem_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siem_user -d alert_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  agent-db:
+    image: postgres:17
+    ports:
+      - "5004:5432"
+    volumes:
+      - agent-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: agent_db
+      POSTGRES_USER: siem_user
+      POSTGRES_PASSWORD: siem_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siem_user -d agent_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  normalisation-db:
+    image: postgres:17
+    ports:
+      - "5005:5432"
+    volumes:
+      - normalisation-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: normalisation_db
+      POSTGRES_USER: siem_user
+      POSTGRES_PASSWORD: siem_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siem_user -d normalisation_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  elasticsearch:
+    image: elasticsearch:9.0.2
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200 > /dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
   kafka-init:
     image: alpine
     volumes:
@@ -38,6 +137,192 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  account-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: account-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://account-db:5432/accountdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      JWT_SECRET_KEY: 107f5754af43f264cb811fb35c826b9ea3691baf152cdd0aa84f6e0817f13265
+    depends_on:
+      account-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  log-analysis-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: log-analysis-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://analysis-db:5432/analysis_db
+      SPRING_DATASOURCE_USERNAME: siem_user
+      SPRING_DATASOURCE_PASSWORD: siem_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      SPRING_DATA_REDIS_HOST: redis
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      AGENT_SERVICE_URL: http://agent-service:8086
+      JWT_SECRET_KEY: 107f5754af43f264cb811fb35c826b9ea3691baf152cdd0aa84f6e0817f13265
+    depends_on:
+      analysis-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  log-query-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: log-query-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      JWT_SECRET_KEY: 107f5754af43f264cb811fb35c826b9ea3691baf152cdd0aa84f6e0817f13265
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: on-failure
+
+  alert-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: alert-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://alert-db:5432/alert_db
+      SPRING_DATASOURCE_USERNAME: siem_user
+      SPRING_DATASOURCE_PASSWORD: siem_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      AGENT_SERVICE_URL: http://agent-service:8086
+      JWT_SECRET_KEY: 107f5754af43f264cb811fb35c826b9ea3691baf152cdd0aa84f6e0817f13265
+    depends_on:
+      alert-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  normalisation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: normalisation-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://normalisation-db:5432/normalisation_db
+      SPRING_DATASOURCE_USERNAME: siem_user
+      SPRING_DATASOURCE_PASSWORD: siem_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+    depends_on:
+      normalisation-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: agent-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://agent-db:5432/agent_db
+      SPRING_DATASOURCE_USERNAME: siem_user
+      SPRING_DATASOURCE_PASSWORD: siem_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      JWT_SECRET_KEY: 107f5754af43f264cb811fb35c826b9ea3691baf152cdd0aa84f6e0817f13265
+    depends_on:
+      agent-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: notification-service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      AGENT_SERVICE_URL: http://agent-service:8086
+      JWT_SECRET_KEY: 107f5754af43f264cb811fb35c826b9ea3691baf152cdd0aa84f6e0817f13265
+      SMTP_PASSWORD: xsmtpsib-3b8614d4d1ba995ca2e6e28a54c039e60c9a8d2334c5a4e3c44a3897c24a53fd-PIr34VPbe2oVkkfY
+    depends_on:
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  log-saving-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: log-saving-service
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    restart: on-failure
+
+  aggregation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: aggregation-service
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9093
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      AGENT_SERVICE_URL: http://agent-service:8086
+    depends_on:
+      kafka:
+        condition: service_started
+    restart: on-failure
+
 volumes:
   account-db-data:
   kafka-data:
+  elasticsearch-data:
+  analysis-db-data:
+  alert-db-data:
+  agent-db-data:
+  normalisation-db-data:
