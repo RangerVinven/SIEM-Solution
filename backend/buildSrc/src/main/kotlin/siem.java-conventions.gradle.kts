@@ -2,12 +2,6 @@ plugins {
     id("java")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
-    }
-}
-
 repositories {
     mavenCentral()
 }
@@ -16,6 +10,22 @@ testing {
     suites {
         val test by getting(JvmTestSuite::class) {
             useJUnitJupiter()
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.withType<JavaExec> {
+        val envFile = project.file(".env")
+        if (envFile.exists()) {
+            envFile.readLines()
+                .filter { it.isNotBlank() && !it.startsWith("#") && it.contains("=") }
+                .forEach { line ->
+                    val idx = line.indexOf("=")
+                    val key = line.substring(0, idx).trim()
+                    val value = line.substring(idx + 1).trim()
+                    environment(key, value)
+                }
         }
     }
 }
