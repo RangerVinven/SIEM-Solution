@@ -2,6 +2,7 @@ package siem.account.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,8 +36,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/account/users").permitAll()
                 .requestMatchers("/api/account/login").permitAll()
+                .requestMatchers("/api/account/logout").permitAll()
                 .requestMatchers("/api/account/schools/api-keys/**").permitAll()
                 .requestMatchers("/api/account/internal/**").permitAll()
                 .anyRequest().authenticated()

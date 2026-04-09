@@ -28,8 +28,4 @@ public class School {
     @Column(unique = true)
     private UUID apiKey;
 
-    private String buildingCode;
-    private String siteLocation;
-    private String serverRoomLocation;
-    private String serverCabinetKeyInfo;
 }

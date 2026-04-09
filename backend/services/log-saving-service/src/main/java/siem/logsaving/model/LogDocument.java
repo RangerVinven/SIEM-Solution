@@ -18,9 +18,10 @@ public class LogDocument {
     @Id
     private String id;
 
-    @Field(name = "@timestamp", type = FieldType.Date)
+    @Field(name = "@timestamp", type = FieldType.Keyword)
     private String timestamp;
 
+    @Field(type = FieldType.Keyword)
     private String schoolId;
 
     private String message;

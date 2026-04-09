@@ -63,7 +63,6 @@ public class RuleEngineService {
             String path = "$." + rule.getFieldToWatch();
             Object value = JsonPath.read(eventMap, path);
             
-            rule.getName(), rule.getFieldToWatch(), rule.getExpectedValue(), value);
 
             if (value == null || !String.valueOf(value).equals(rule.getExpectedValue())) {
                 return false;

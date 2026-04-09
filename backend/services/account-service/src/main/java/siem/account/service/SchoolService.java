@@ -75,10 +75,6 @@ public class SchoolService {
         School existingSchool = getSchoolEntity(id);
 
         existingSchool.setName(request.getName());
-        existingSchool.setBuildingCode(request.getBuildingCode());
-        existingSchool.setSiteLocation(request.getSiteLocation());
-        existingSchool.setServerRoomLocation(request.getServerRoomLocation());
-        existingSchool.setServerCabinetKeyInfo(request.getServerCabinetKeyInfo());
 
         return mapper.toResponse(repo.save(existingSchool));
     }
