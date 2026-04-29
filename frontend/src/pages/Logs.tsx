@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { getLogs } from "@/lib/api"
@@ -27,11 +27,16 @@ export default function Logs() {
     const [page, setPage] = useState(0)
     const [data, setData] = useState<PageData | null>(null)
     const [loading, setLoading] = useState(false)
-    const [searched, setSearched] = useState(false)
+
+    useEffect(() => {
+        setLoading(true)
+        getLogs({ page: 0, size: 25 })
+            .then(setData)
+            .finally(() => setLoading(false))
+    }, [])
 
     function search(p: number) {
         setLoading(true)
-        setSearched(true)
         getLogs({ message: message || undefined, hostname: hostname || undefined, category: category || undefined, level: level || undefined, page: p, size: 25 })
             .then(setData)
             .finally(() => setLoading(false))
@@ -80,7 +85,7 @@ export default function Logs() {
 
             {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
 
-            {!loading && searched && data && (
+            {!loading && data && (
                 <>
                     <div className="text-sm text-muted-foreground">
                         {data.totalElements} result{data.totalElements !== 1 ? "s" : ""}
