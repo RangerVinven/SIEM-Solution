@@ -20,4 +20,5 @@ public class NormalisationMapping {
     private String targetCategory;
     private String targetAction;
     private String targetOutcome;
+    private String targetLevel;
 }

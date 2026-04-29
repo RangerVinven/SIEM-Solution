@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import siem.models.RawSiemEvent;
 
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -18,8 +19,9 @@ public class EventPublisherService {
 
     public void publishEvent(List<RawSiemEvent> events, String schoolId) {
         for (RawSiemEvent event : events) {
+            String timestamp = event.timestamp() != null ? event.timestamp() : Instant.now().toString();
             RawSiemEvent eventWithOrg = new RawSiemEvent(
-                event.timestamp(),
+                timestamp,
                 schoolId,
                 event.event(),
                 event.host(),

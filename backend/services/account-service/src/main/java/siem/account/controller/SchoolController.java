@@ -47,10 +47,9 @@ public class SchoolController {
     private ResponseCookie buildTokenCookie(String token) {
         return ResponseCookie.from("token", token)
                 .httpOnly(true)
-                .secure(true)
                 .path("/")
                 .maxAge(24 * 60 * 60)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
     }
 

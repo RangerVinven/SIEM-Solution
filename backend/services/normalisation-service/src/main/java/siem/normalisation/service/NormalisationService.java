@@ -56,6 +56,15 @@ public class NormalisationService {
 
             NormalisationMapping mapping = mappingOpt.get();
 
+            String level = mapping.getTargetLevel() != null
+                    ? mapping.getTargetLevel()
+                    : (event.log() != null ? event.log().level() : null);
+
+            RawSiemEvent.Log updatedLog = new RawSiemEvent.Log(
+                    event.log() != null ? event.log().filePath() : null,
+                    level
+            );
+
             // Creates a new event with the new mapping (new category, action, and outcome)
             return new RawSiemEvent(
                 event.timestamp(),
@@ -73,7 +82,7 @@ public class NormalisationService {
                 ),
                 event.host(),
                 event.message(),
-                event.log(),
+                updatedLog,
                 event.tags(),
                 event.labels()
             );
