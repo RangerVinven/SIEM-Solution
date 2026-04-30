@@ -7,6 +7,7 @@ import Dashboard from "@/pages/Dashboard"
 import Alerts from "@/pages/Alerts"
 import Logs from "@/pages/Logs"
 import Agents from "@/pages/Agents"
+import Rules from "@/pages/Rules"
 import Settings from "@/pages/Settings"
 import Root from "@/pages/Root"
 
@@ -22,6 +23,7 @@ function App() {
                     <Route path="/alerts" element={<Alerts />} />
                     <Route path="/logs" element={<Logs />} />
                     <Route path="/agents" element={<Agents />} />
+                    <Route path="/rules" element={<Rules />} />
                     <Route path="/settings" element={<Settings />} />
                 </Route>
                 <Route path="/" element={<Root />} />

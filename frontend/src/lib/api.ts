@@ -2,6 +2,7 @@ const ACCOUNT_SERVICE = "http://localhost:8081/api/account"
 const ALERT_SERVICE = "http://localhost:8084/alerts"
 const LOG_SERVICE = "http://localhost:8083/logs"
 const AGENT_SERVICE = "http://localhost:8086/agents"
+const RULE_SERVICE = "http://localhost:8082/rules"
 
 export async function login(email: string, password: string) {
     const res = await fetch(`${ACCOUNT_SERVICE}/login`, {
@@ -179,6 +180,68 @@ export async function getUsersBySchool(schoolId: string) {
 
     if (!res.ok) throw new Error(await res.text())
     return res.json()
+}
+
+export async function getRules() {
+    const res = await fetch(RULE_SERVICE, {
+        credentials: "include",
+    })
+
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+}
+
+export async function createRule(data: {
+    name: string
+    description: string
+    severity: string
+    fieldToWatch: string
+    expectedValue: string
+    threshold: number
+    windowMinutes: number
+    remediationSteps: string[]
+    enabled: boolean
+}) {
+    const res = await fetch(RULE_SERVICE, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    })
+
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+}
+
+export async function updateRule(id: number, data: {
+    name: string
+    description: string
+    severity: string
+    fieldToWatch: string
+    expectedValue: string
+    threshold: number
+    windowMinutes: number
+    remediationSteps: string[]
+    enabled: boolean
+}) {
+    const res = await fetch(`${RULE_SERVICE}/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    })
+
+    if (!res.ok) throw new Error(await res.text())
+    return res.json()
+}
+
+export async function deleteRule(id: number) {
+    const res = await fetch(`${RULE_SERVICE}/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+    })
+
+    if (!res.ok) throw new Error(await res.text())
 }
 
 export async function createSchool(name: string) {

@@ -2,7 +2,7 @@ import requests
 import json
 
 URL = "http://localhost:8089/aggregate"
-API_KEY = "d9a5163c-540b-48db-963d-6f2c082f989a"
+API_KEY = "1f190f92-d218-408c-967c-bfd49bd66c9d"
 
 def simulate_ransomware_logs():
     logs = []
