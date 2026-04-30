@@ -19,7 +19,7 @@ public class AgentServiceClient {
     public Optional<Map<String, String>> getAgentDetails(String hostname) {
         try {
             Map<String, String> details = restClient.get()
-                    .uri("/internal/agents/search?hostname={h}", hostname)
+                    .uri("/agents/internal/search?hostname={h}", hostname)
                     .retrieve()
                     .body(Map.class);
             return Optional.ofNullable(details);
