@@ -1,0 +1,13 @@
+server:
+  url: "http://localhost:8089/aggregate"
+  api_key: "school-api-key"
+
+agent:
+  batch_size: 100
+  flush_interval_ms: 5000
+
+collectors:
+  windows_events:
+    - System
+    - Security
+    - Application
