@@ -152,7 +152,7 @@ export default function Alerts() {
                                                 variant={alert.resolved ? "outline" : "default"}
                                                 onClick={e => { e.stopPropagation(); handleResolve(alert) }}
                                             >
-                                                {alert.resolved ? "Mark as Unresolve" : "Mark as Resolved"}
+                                                {alert.resolved ? "Mark as Unresolved" : "Mark as Resolved"}
                                             </Button>
                                         </div>
                                     </div>
