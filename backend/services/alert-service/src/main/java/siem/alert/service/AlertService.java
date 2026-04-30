@@ -9,6 +9,7 @@ import siem.models.AlertEvent;
 import java.time.Instant;
 
 import siem.alert.client.AgentServiceClient;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -25,15 +26,20 @@ public class AlertService {
         alert.setRuleName(event.ruleName());
         alert.setSeverity(event.severity());
         alert.setDescription(event.description());
-        alert.setRemediationSteps(event.remediationSteps());
-        
         String hostname = event.triggeringEvent().host().hostname();
         alert.setHostName(hostname);
-        
+
+        String[] location = {""};
         agentServiceClient.getAgentDetails(hostname).ifPresent(details -> {
             alert.setSchoolName(details.get("schoolName"));
             alert.setLocation(details.get("location"));
+            location[0] = details.getOrDefault("location", "");
         });
+
+        List<String> steps = event.remediationSteps().stream()
+                .map(step -> step.replace("{{host}}", hostname).replace("{{room}}", location[0]))
+                .toList();
+        alert.setRemediationSteps(steps);
 
         alert.setTimestamp(Instant.ofEpochSecond(event.timestamp()));
         repository.save(alert);
