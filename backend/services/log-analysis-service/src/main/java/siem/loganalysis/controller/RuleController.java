@@ -80,6 +80,8 @@ public class RuleController {
         rule.setSeverity(request.getSeverity());
         rule.setFieldToWatch(request.getFieldToWatch());
         rule.setExpectedValue(request.getExpectedValue());
+        rule.setSecondFieldToWatch(request.getSecondFieldToWatch());
+        rule.setSecondExpectedValue(request.getSecondExpectedValue());
         rule.setThreshold(request.getThreshold());
         rule.setWindowMinutes(request.getWindowMinutes());
         rule.setRemediationSteps(request.getRemediationSteps());

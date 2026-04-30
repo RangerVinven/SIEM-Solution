@@ -13,6 +13,8 @@ type Rule = {
     severity: string
     fieldToWatch: string
     expectedValue: string
+    secondFieldToWatch: string
+    secondExpectedValue: string
     threshold: number
     windowMinutes: number
     remediationSteps: string[]
@@ -25,6 +27,8 @@ type RuleForm = {
     severity: string
     fieldToWatch: string
     expectedValue: string
+    secondFieldToWatch: string
+    secondExpectedValue: string
     threshold: number
     windowMinutes: number
     remediationSteps: string[]
@@ -37,6 +41,8 @@ const emptyForm: RuleForm = {
     severity: "MEDIUM",
     fieldToWatch: "",
     expectedValue: "",
+    secondFieldToWatch: "",
+    secondExpectedValue: "",
     threshold: 1,
     windowMinutes: 5,
     remediationSteps: [],
@@ -85,6 +91,8 @@ export default function Rules() {
             severity: rule.severity,
             fieldToWatch: rule.fieldToWatch,
             expectedValue: rule.expectedValue,
+            secondFieldToWatch: rule.secondFieldToWatch ?? "",
+            secondExpectedValue: rule.secondExpectedValue ?? "",
             threshold: rule.threshold,
             windowMinutes: rule.windowMinutes,
             remediationSteps: rule.remediationSteps ?? [],
@@ -225,6 +233,24 @@ export default function Rules() {
                                     />
                                 </div>
                                 <div className="grid gap-2">
+                                    <Label htmlFor="secondFieldToWatch">Second Field (optional)</Label>
+                                    <Input
+                                        id="secondFieldToWatch"
+                                        placeholder="e.g. event.outcome"
+                                        value={form.secondFieldToWatch}
+                                        onChange={e => setField("secondFieldToWatch", e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="secondExpectedValue">Second Value (optional)</Label>
+                                    <Input
+                                        id="secondExpectedValue"
+                                        placeholder="e.g. failure"
+                                        value={form.secondExpectedValue}
+                                        onChange={e => setField("secondExpectedValue", e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid gap-2">
                                     <Label htmlFor="threshold">Threshold</Label>
                                     <Input
                                         id="threshold"
@@ -344,6 +370,18 @@ export default function Rules() {
                                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Value</p>
                                                 <p className="text-sm font-mono">{rule.expectedValue}</p>
                                             </div>
+                                            {rule.secondFieldToWatch && (
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Second Field</p>
+                                                    <p className="text-sm font-mono">{rule.secondFieldToWatch}</p>
+                                                </div>
+                                            )}
+                                            {rule.secondExpectedValue && (
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Second Value</p>
+                                                    <p className="text-sm font-mono">{rule.secondExpectedValue}</p>
+                                                </div>
+                                            )}
                                             <div className="flex flex-col gap-1">
                                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Threshold</p>
                                                 <p className="text-sm">{rule.threshold}</p>

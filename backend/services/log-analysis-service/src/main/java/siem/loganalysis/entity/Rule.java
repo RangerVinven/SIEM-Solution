@@ -31,6 +31,10 @@ public class Rule {
     @Column(nullable = false)
     private String expectedValue;
 
+    private String secondFieldToWatch;
+
+    private String secondExpectedValue;
+
     private int threshold;
 
     private int windowMinutes;

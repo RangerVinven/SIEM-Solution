@@ -10,6 +10,8 @@ public class RuleRequest {
     private String severity;
     private String fieldToWatch;
     private String expectedValue;
+    private String secondFieldToWatch;
+    private String secondExpectedValue;
     private int threshold;
     private int windowMinutes;
     private List<String> remediationSteps;

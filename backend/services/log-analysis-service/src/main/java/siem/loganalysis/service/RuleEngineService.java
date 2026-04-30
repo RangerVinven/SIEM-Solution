@@ -62,10 +62,17 @@ public class RuleEngineService {
         try {
             String path = "$." + rule.getFieldToWatch();
             Object value = JsonPath.read(eventMap, path);
-            
 
             if (value == null || !String.valueOf(value).equals(rule.getExpectedValue())) {
                 return false;
+            }
+
+            if (rule.getSecondFieldToWatch() != null && !rule.getSecondFieldToWatch().isBlank()) {
+                String secondPath = "$." + rule.getSecondFieldToWatch();
+                Object secondValue = JsonPath.read(eventMap, secondPath);
+                if (secondValue == null || !String.valueOf(secondValue).equals(rule.getSecondExpectedValue())) {
+                    return false;
+                }
             }
 
             if (rule.getThreshold() <= 1) {

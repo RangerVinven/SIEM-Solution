@@ -197,6 +197,8 @@ export async function createRule(data: {
     severity: string
     fieldToWatch: string
     expectedValue: string
+    secondFieldToWatch: string
+    secondExpectedValue: string
     threshold: number
     windowMinutes: number
     remediationSteps: string[]
@@ -219,6 +221,8 @@ export async function updateRule(id: number, data: {
     severity: string
     fieldToWatch: string
     expectedValue: string
+    secondFieldToWatch: string
+    secondExpectedValue: string
     threshold: number
     windowMinutes: number
     remediationSteps: string[]

@@ -39,6 +39,8 @@ public class RuleBootstrapService {
             rule.setSeverity(template.getSeverity());
             rule.setFieldToWatch(template.getFieldToWatch());
             rule.setExpectedValue(template.getExpectedValue());
+            rule.setSecondFieldToWatch(template.getSecondFieldToWatch());
+            rule.setSecondExpectedValue(template.getSecondExpectedValue());
             rule.setThreshold(template.getThreshold());
             rule.setWindowMinutes(template.getWindowMinutes());
             rule.setRemediationSteps(new ArrayList<>(template.getRemediationSteps()));
