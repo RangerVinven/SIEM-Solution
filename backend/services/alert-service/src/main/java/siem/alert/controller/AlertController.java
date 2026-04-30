@@ -22,10 +22,10 @@ public class AlertController {
     @GetMapping
     public Page<Alert> getAlerts(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(required = false) Boolean resolved, Pageable pageable) {
         if (resolved != null) {
-            return repository.findBySchoolIdAndResolved(principal.schoolId(), resolved, pageable);
+            return repository.findBySchoolIdAndResolvedOrderByTimestampDesc(principal.schoolId(), resolved, pageable);
         }
 
-        return repository.findBySchoolId(principal.schoolId(), pageable);
+        return repository.findBySchoolIdOrderByTimestampDesc(principal.schoolId(), pageable);
     }
 
     @GetMapping("/stats")

@@ -8,8 +8,8 @@ import siem.alert.entity.Alert;
 
 @Repository
 public interface AlertRepository extends JpaRepository<Alert, Long> {
-    Page<Alert> findBySchoolId(String schoolId, Pageable pageable);
-    Page<Alert> findBySchoolIdAndResolved(String schoolId, boolean resolved, Pageable pageable);
+    Page<Alert> findBySchoolIdOrderByTimestampDesc(String schoolId, Pageable pageable);
+    Page<Alert> findBySchoolIdAndResolvedOrderByTimestampDesc(String schoolId, boolean resolved, Pageable pageable);
 
     long countBySchoolIdAndSeverityIgnoreCaseAndResolvedFalse(String schoolId, String severity);
     long countBySchoolIdAndResolvedFalse(String schoolId);
