@@ -1,17 +1,7 @@
 package collector
 
-import (
-	"context"
+import "agent/internal/processor"
 
-	"siem-agent/internal/processor"
-)
-
-// Sender defines the interface for sending events
 type Sender interface {
-	Send(event processor.ECSEvent)
-}
-
-// Collector defines the interface for log collectors
-type Collector interface {
-	Start(ctx context.Context, sender Sender) error
+	Send(event processor.Event)
 }
