@@ -79,18 +79,23 @@ public class RuleEngineService {
     }
 
     private boolean checkThreshold(Rule rule, RawSiemEvent event) {
-        String key = String.format("counter:%s:%s:%s", 
-            rule.getSchoolId(), 
-            rule.getId(), 
+        String key = String.format("counter:%s:%s:%s",
+            rule.getSchoolId(),
+            rule.getId(),
             event.host().hostname());
 
         Long count = redisTemplate.opsForValue().increment(key);
-        
+
         if (count != null && count == 1) {
             redisTemplate.expire(key, Duration.ofMinutes(rule.getWindowMinutes()));
         }
 
-        return count != null && count >= rule.getThreshold();
+        if (count != null && count >= rule.getThreshold()) {
+            redisTemplate.delete(key);
+            return true;
+        }
+
+        return false;
     }
 
     private String getSchoolName(String schoolId) {

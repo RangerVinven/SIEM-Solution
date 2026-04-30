@@ -24,7 +24,7 @@ public class LogQueryService {
     public Page<LogDocument> findLogs(String schoolId, String message, String hostname, String category, String level, Pageable pageable) {
         BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
         
-        boolQueryBuilder.must(q -> q.term(t -> t.field("schoolId").value(schoolId)));
+        boolQueryBuilder.must(q -> q.term(t -> t.field("schoolId.keyword").value(schoolId)));
 
         if (message != null && !message.isBlank()) {
             boolQueryBuilder.must(q -> q.match(m -> m.field("message").query(message)));
