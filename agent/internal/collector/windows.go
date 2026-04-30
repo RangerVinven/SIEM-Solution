@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -85,11 +86,27 @@ func (c *WindowsCollector) pollChannel(ctx context.Context, channel string, send
 				event.EventData.Dataset = "windows.event"
 				event.EventData.Provider = channel
 				event.EventData.Category = "host"
+				event.Log.Level = parseLevel(line)
 
 				sender.Send(event)
 			}
 
 			_ = cmd.Wait()
 		}
+	}
+}
+
+func parseLevel(raw string) string {
+	switch {
+	case strings.Contains(raw, "Critical"):
+		return "error"
+	case strings.Contains(raw, "Error"):
+		return "error"
+	case strings.Contains(raw, "Warning"):
+		return "warn"
+	case strings.Contains(raw, "Verbose"):
+		return "debug"
+	default:
+		return "info"
 	}
 }

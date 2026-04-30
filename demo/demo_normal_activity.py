@@ -4,14 +4,14 @@ import itertools
 from demo_utils import get_api_key, send_events, HOSTNAMES
 
 NORMAL_EVENTS = [
-    {"event": {"dataset": "windows.event", "category": "authentication", "outcome": "success", "action": "user_login"},  "message": "User logged in successfully"},
-    {"event": {"dataset": "windows.event", "category": "file",           "outcome": "success", "action": "file_read"},   "message": "File read access granted"},
-    {"event": {"dataset": "windows.event", "category": "network",        "outcome": "success", "action": "connection"},  "message": "Outbound network connection established"},
-    {"event": {"dataset": "windows.event", "category": "process",        "outcome": "success", "action": "process_start"}, "message": "Process started"},
-    {"event": {"dataset": "windows.event", "category": "authentication", "outcome": "success", "action": "user_logout"}, "message": "User logged out"},
-    {"event": {"dataset": "windows.event", "category": "file",           "outcome": "success", "action": "file_write"},  "message": "File saved"},
-    {"event": {"dataset": "windows.event", "category": "network",        "outcome": "success", "action": "dns_lookup"},  "message": "DNS lookup performed"},
-    {"event": {"dataset": "windows.event", "category": "system",         "outcome": "success", "action": "service_start"}, "message": "Windows service started"},
+    {"event": {"dataset": "windows.event", "category": "authentication", "outcome": "success", "action": "user_login"},   "log": {"level": "info"},  "message": "User logged in successfully"},
+    {"event": {"dataset": "windows.event", "category": "file",           "outcome": "success", "action": "file_read"},    "log": {"level": "info"},  "message": "File read access granted"},
+    {"event": {"dataset": "windows.event", "category": "network",        "outcome": "success", "action": "connection"},   "log": {"level": "info"},  "message": "Outbound network connection established"},
+    {"event": {"dataset": "windows.event", "category": "process",        "outcome": "success", "action": "process_start"},"log": {"level": "info"},  "message": "Process started"},
+    {"event": {"dataset": "windows.event", "category": "authentication", "outcome": "success", "action": "user_logout"},  "log": {"level": "info"},  "message": "User logged out"},
+    {"event": {"dataset": "windows.event", "category": "file",           "outcome": "success", "action": "file_write"},   "log": {"level": "info"},  "message": "File saved"},
+    {"event": {"dataset": "windows.event", "category": "network",        "outcome": "success", "action": "dns_lookup"},   "log": {"level": "info"},  "message": "DNS lookup performed"},
+    {"event": {"dataset": "windows.event", "category": "system",         "outcome": "success", "action": "service_start"},"log": {"level": "info"},  "message": "Windows service started"},
 ]
 
 def main():

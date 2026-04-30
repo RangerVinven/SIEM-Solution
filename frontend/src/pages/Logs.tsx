@@ -109,12 +109,12 @@ export default function Logs() {
                                     {data.content.map(log => (
                                         <tr key={log.id} className="hover:bg-muted/30">
                                             <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
-                                                {log.timestamp ? new Date(log.timestamp).toLocaleString() : "—"}
+                                                {log.timestamp ? new Date(log.timestamp).toLocaleString() : "-"}
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">{log.host?.hostname ?? "—"}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">{log.log?.level ?? "—"}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">{log.event?.category ?? "—"}</td>
-                                            <td className="px-4 py-3 max-w-md truncate">{log.message ?? "—"}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">{log.host?.hostname ?? "-"}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">{log.log?.level ?? "-"}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">{log.event?.category ?? "-"}</td>
+                                            <td className="px-4 py-3 max-w-md truncate">{log.message ?? "-"}</td>
                                         </tr>
                                     ))}
                                 </tbody>

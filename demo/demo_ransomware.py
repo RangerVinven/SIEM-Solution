@@ -15,6 +15,7 @@ def main():
                 "action": "file_modified",
             },
             "host": {"hostname": INFECTED_HOST},
+            "log": {"level": "error"},
             "message": f"File encrypted: document_{i:03d}.docx -> document_{i:03d}.docx.locked",
         }
         send_events([event], api_key)

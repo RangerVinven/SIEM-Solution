@@ -13,6 +13,7 @@ def main():
             "action": "removable_media_inserted",
         },
         "host": {"hostname": USB_HOST},
+        "log": {"level": "warn"},
         "message": "Removable storage device connected: USB Mass Storage Device (16GB)",
     }
     send_events([event], api_key)

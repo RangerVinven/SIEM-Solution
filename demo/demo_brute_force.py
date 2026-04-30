@@ -16,6 +16,7 @@ def main():
                 "action": "user_login",
             },
             "host": {"hostname": ATTACKER_HOST},
+            "log": {"level": "warn"},
             "message": f"Logon failure: unknown username or bad password (attempt {i})",
         }
         send_events([event], api_key)

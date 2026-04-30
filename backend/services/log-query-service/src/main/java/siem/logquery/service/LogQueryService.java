@@ -3,6 +3,7 @@ package siem.logquery.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHitSupport;
@@ -31,20 +32,27 @@ public class LogQueryService {
         }
 
         if (hostname != null && !hostname.isBlank()) {
-            boolQueryBuilder.must(q -> q.term(t -> t.field("host.hostname").value(hostname)));
+            boolQueryBuilder.must(q -> q.term(t -> t.field("host.hostname.keyword").value(hostname)));
         }
 
         if (category != null && !category.isBlank()) {
-            boolQueryBuilder.must(q -> q.term(t -> t.field("event.category").value(category)));
+            boolQueryBuilder.must(q -> q.term(t -> t.field("event.category.keyword").value(category)));
         }
 
         if (level != null && !level.isBlank()) {
             boolQueryBuilder.must(q -> q.term(t -> t.field("log.level").value(level)));
         }
 
+        Pageable sortedPageable = pageable.isUnpaged()
+                ? pageable
+                : org.springframework.data.domain.PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(Sort.Direction.DESC, "@timestamp"));
+
         NativeQuery query = NativeQuery.builder()
                 .withQuery(new Query(boolQueryBuilder.build()))
-                .withPageable(pageable)
+                .withPageable(sortedPageable)
                 .build();
 
         SearchHits<LogDocument> searchHits = elasticsearchOperations.search(query, LogDocument.class);
