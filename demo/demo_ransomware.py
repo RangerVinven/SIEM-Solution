@@ -1,6 +1,9 @@
 import time
 from demo_utils import get_api_key, send_events
 
+# field: event.category
+# value: file_tampering
+
 INFECTED_HOST = "LIB-PC-01"
 
 def main():
